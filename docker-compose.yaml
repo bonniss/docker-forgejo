@@ -1,0 +1,56 @@
+version: '3'
+
+networks:
+  forgejo:
+    external: false
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:8
+    container_name: forgejo
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+      FORGEJO__DATABASE__DB_TYPE: postgres
+      FORGEJO__DATABASE__HOST: db:5432
+      FORGEJO__DATABASE__NAME: ${DATABASE_NAME}
+      FORGEJO__DATABASE__USER: ${DATABASE_USER}
+      FORGEJO__DATABASE__PASSWD: ${DATABASE_PASSWD}
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - forgejo
+    ports:
+      - '3000:3000'
+      - '222:22'
+    volumes:
+      - ./forgejo:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+  db:
+    image: postgres:14
+    container_name: forgejo_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWD}
+    networks:
+      - forgejo
+    volumes:
+      - ./forgejo-db:/var/lib/postgresql/data
+  # Uncomment để tạo trình quản lý database trên web
+  # dba:
+  #   image: adminer
+  #   container_name: forgejo_dba
+  #   restart: always
+  #   environment:
+  #     ADMINER_DEFAULT_SERVER: db
+  #     ADMINER_DESIGN: nette
+  #   ports:
+  #     - 8080:8080
+  #   networks:
+  #     - forgejo
+  #   depends_on:
+  #     - db
